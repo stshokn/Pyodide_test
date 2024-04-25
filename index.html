@@ -13,19 +13,30 @@
     <p id="output">結果がここに表示されます。</p>
 
     <script type="text/javascript">
-      async function calculateSum() {
-        let pyodide = await loadPyodide({
-          indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
-        });
-        await pyodide.loadPackage('numpy');
+      let pyodideLoaded = false;
+      let pyodideRuntime;
 
-        // ユーザーが入力したテキストを取得
+      async function loadPyodideAndPackages() {
+        if (!pyodideLoaded) {
+          pyodideRuntime = await loadPyodide({
+            indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
+          });
+          await pyodideRuntime.loadPackage('numpy');
+          pyodideLoaded = true;
+        }
+      }
+
+      window.onload = loadPyodideAndPackages;
+
+      async function calculateSum() {
+        if (!pyodideLoaded) {
+          await loadPyodideAndPackages();
+        }
+        
         const input = document.getElementById('numbers').value;
-        // 入力を配列に変換
         const numbers = input.split(',').map(Number);
 
-        // numpy を使用して配列の合計を計算
-        let result = await pyodide.runPythonAsync(`
+        let result = await pyodideRuntime.runPythonAsync(`
           import numpy as np
           np.sum(${JSON.stringify(numbers)})
         `);
