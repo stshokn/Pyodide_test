@@ -59,8 +59,10 @@
           ax.set_title('Projectile Motion')
           ax.set_xlabel('Distance (m)')
           ax.set_ylabel('Height (m)')
-          ax.set_ylim(bottom=0)
           ax.grid(True)
+
+          # アスペクト比を等しく設定
+          ax.set_aspect('equal', adjustable='box')
 
           # グラフを画像としてエンコード
           buf = BytesIO()
@@ -71,7 +73,7 @@
           plt.close(fig)
 
           # HTMLで表示
-          html_img = f"<img src='data:image/png;base64,{img_base64}' />"
+          html_img = f"<img src='data:image/png;base64,{img_base64}' style='max-width:100%; height:auto;' />"
           document.getElementById('output').innerHTML = html_img
         `);
       }
