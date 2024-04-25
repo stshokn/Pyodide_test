@@ -1,0 +1,70 @@
+from js import document, window, setTimeout, Math
+
+# ページに要素を追加
+canvas = document.createElement('canvas')
+document.body.appendChild(canvas)
+ctx = canvas.getContext('2d')
+
+# 球体の初期設定
+ball1 = {'x': 50, 'y': 50, 'radius': 20, 'color': 'red', 'velocity': 5}
+ball2 = {'x': 250, 'y': 50, 'radius': 20, 'color': 'blue', 'velocity': 3}
+
+# ユーザーからの入力を受け取るフォームを作成
+input_form = document.createElement('form')
+input_form.innerHTML = '''
+  <label for="ball1_x">Ball 1 Initial X Position:</label>
+  <input type="number" id="ball1_x" value="50"><br>
+  <label for="ball1_y">Ball 1 Initial Y Position:</label>
+  <input type="number" id="ball1_y" value="50"><br>
+  <label for="ball1_v">Ball 1 Velocity:</label>
+  <input type="number" id="ball1_v" value="5"><br><br>
+  <label for="ball2_x">Ball 2 Initial X Position:</label>
+  <input type="number" id="ball2_x" value="250"><br>
+  <label for="ball2_y">Ball 2 Initial Y Position:</label>
+  <input type="number" id="ball2_y" value="50"><br>
+  <label for="ball2_v">Ball 2 Velocity:</label>
+  <input type="number" id="ball2_v" value="3"><br><br>
+  <button type="button" onclick="startAnimation()">Generate Animation</button>
+'''
+document.body.appendChild(input_form)
+
+# ユーザーからの入力を取得する関数
+def get_user_input():
+    ball1['x'] = int(document.getElementById('ball1_x').value)
+    ball1['y'] = int(document.getElementById('ball1_y').value)
+    ball1['velocity'] = int(document.getElementById('ball1_v').value)
+    ball2['x'] = int(document.getElementById('ball2_x').value)
+    ball2['y'] = int(document.getElementById('ball2_y').value)
+    ball2['velocity'] = int(document.getElementById('ball2_v').value)
+
+# アニメーションの描画を行う関数
+def draw_animation():
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.beginPath()
+    ctx.arc(ball1['x'], ball1['y'], ball1['radius'], 0, 2 * Math.PI)
+    ctx.fillStyle = ball1['color']
+    ctx.fill()
+    ctx.closePath()
+
+    ctx.beginPath()
+    ctx.arc(ball2['x'], ball2['y'], ball2['radius'], 0, 2 * Math.PI)
+    ctx.fillStyle = ball2['color']
+    ctx.fill()
+    ctx.closePath()
+
+    ball1['x'] += ball1['velocity']
+    ball2['x'] += ball2['velocity']
+
+    # 球体が衝突したらアニメーションを停止する
+    if ball1['x'] + ball1['radius'] >= ball2['x'] - ball2['radius']:
+        return
+
+    setTimeout(draw_animation, 1000 / 60)  # 60 FPS
+
+# アニメーションを開始する関数
+def startAnimation():
+    get_user_input()
+    draw_animation()
+
+# ページが読み込まれた時にアニメーションを開始する
+window.onload = startAnimation
