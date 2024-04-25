@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Pyodide Test</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
+</head>
+<body>
+    <h1>Pyodideを使ったPython実行のデモ</h1>
+    <p id="output">結果がここに表示されます。</p>
+    <script type="text/javascript">
+      async function main() {
+        await loadPyodide({
+          indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
+        });
+        let pyodide = await loadPyodide();
+        let result = await pyodide.runPythonAsync(`
+          import numpy as np
+          np.sum(np.array([1, 2, 3, 4, 5]))
+        `);
+        document.getElementById('output').innerText = "計算結果: " + result.toString();
+      }
+      main();
+    </script>
+</body>
+</html>
