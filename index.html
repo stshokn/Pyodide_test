@@ -2,15 +2,16 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Pyodide Interactive Form</title>
+    <title>Projectile Motion Simulation</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
 </head>
 <body>
-    <h1>Pyodideを使ったインタラクティブな計算デモ</h1>
-    <p>加算したい数値を入力してください（カンマ区切り）:</p>
-    <input type="text" id="numbers" placeholder="例：1, 2, 3, 4, 5">
-    <button onclick="calculateSum()">計算</button>
-    <p id="output">結果がここに表示されます。</p>
+    <h1>斜方投射の軌道シミュレーション</h1>
+    <p>初速度 (m/s) と角度 (度) を入力してください:</p>
+    <input type="text" id="velocity" placeholder="初速度">
+    <input type="text" id="angle" placeholder="角度">
+    <button onclick="plotTrajectory()">グラフ作成</button>
+    <div id="output" style="margin-top: 20px;"></div>
 
     <script type="text/javascript">
       let pyodideLoaded = false;
@@ -21,27 +22,58 @@
           pyodideRuntime = await loadPyodide({
             indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
           });
-          await pyodideRuntime.loadPackage('numpy');
+          await pyodideRuntime.loadPackage(['numpy', 'matplotlib', 'matplotlib-inline']);
           pyodideLoaded = true;
         }
       }
 
       window.onload = loadPyodideAndPackages;
 
-      async function calculateSum() {
+      async function plotTrajectory() {
         if (!pyodideLoaded) {
           await loadPyodideAndPackages();
         }
         
-        const input = document.getElementById('numbers').value;
-        const numbers = input.split(',').map(Number);
+        const velocity = document.getElementById('velocity').value;
+        const angle = document.getElementById('angle').value;
 
         let result = await pyodideRuntime.runPythonAsync(`
           import numpy as np
-          np.sum(${JSON.stringify(numbers)})
-        `);
+          import matplotlib.pyplot as plt
+          from js import document
+          from math import sin, cos, radians
+          from io import BytesIO
+          import base64
 
-        document.getElementById('output').innerText = "計算結果: " + result.toString();
+          v = float(${velocity})
+          theta = radians(float(${angle}))
+
+          g = 9.81  # Gravity acceleration
+          t_flight = 2 * v * sin(theta) / g
+          t = np.linspace(0, t_flight, num=100)
+          x = v * cos(theta) * t
+          y = v * sin(theta) * t - 0.5 * g * t**2
+
+          fig, ax = plt.subplots()
+          ax.plot(x, y)
+          ax.set_title('Projectile Motion')
+          ax.set_xlabel('Distance (m)')
+          ax.set_ylabel('Height (m)')
+          ax.set_ylim(bottom=0)
+          ax.grid(True)
+
+          # グラフを画像としてエンコード
+          buf = BytesIO()
+          plt.savefig(buf, format='png')
+          buf.seek(0)
+          img_base64 = base64.b64encode(buf.read()).decode('ascii')
+          buf.close()
+          plt.close(fig)
+
+          # HTMLで表示
+          html_img = f"<img src='data:image/png;base64,{img_base64}' />"
+          document.getElementById('output').innerHTML = html_img
+        `);
       }
     </script>
 </body>
