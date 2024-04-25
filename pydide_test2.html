@@ -1,70 +1,71 @@
-from js import document, window, setTimeout, Math
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Projectile Motion Simulation</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
+</head>
+<body>
+    <h1>斜方投射の軌道シミュレーション</h1>
+    <p>角度 (度) を入力してください:</p>
+    <input type="number" id="angle" placeholder="角度 (度)">
+    <button onclick="plotTrajectory()">グラフ作成</button>
+    <div id="output" style="margin-top: 20px;"></div>
 
-# ページに要素を追加
-canvas = document.createElement('canvas')
-document.body.appendChild(canvas)
-ctx = canvas.getContext('2d')
+    <script type="text/javascript">
+      let pyodideLoaded = false;
+      let pyodideRuntime;
 
-# 球体の初期設定
-ball1 = {'x': 50, 'y': 50, 'radius': 20, 'color': 'red', 'velocity': 5}
-ball2 = {'x': 250, 'y': 50, 'radius': 20, 'color': 'blue', 'velocity': 3}
+      async function loadPyodideAndPackages() {
+        if (!pyodideLoaded) {
+          pyodideRuntime = await loadPyodide({
+            indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
+          });
+          await pyodideRuntime.loadPackage(['numpy', 'matplotlib']);
+          pyodideLoaded = true;  // Ensure the flag is set after Pyodide is fully loaded
+        }
+      }
 
-# ユーザーからの入力を受け取るフォームを作成
-input_form = document.createElement('form')
-input_form.innerHTML = '''
-  <label for="ball1_x">Ball 1 Initial X Position:</label>
-  <input type="number" id="ball1_x" value="50"><br>
-  <label for="ball1_y">Ball 1 Initial Y Position:</label>
-  <input type="number" id="ball1_y" value="50"><br>
-  <label for="ball1_v">Ball 1 Velocity:</label>
-  <input type="number" id="ball1_v" value="5"><br><br>
-  <label for="ball2_x">Ball 2 Initial X Position:</label>
-  <input type="number" id="ball2_x" value="250"><br>
-  <label for="ball2_y">Ball 2 Initial Y Position:</label>
-  <input type="number" id="ball2_y" value="50"><br>
-  <label for="ball2_v">Ball 2 Velocity:</label>
-  <input type="number" id="ball2_v" value="3"><br><br>
-  <button type="button" onclick="startAnimation()">Generate Animation</button>
-'''
-document.body.appendChild(input_form)
+      window.onload = loadPyodideAndPackages;
 
-# ユーザーからの入力を取得する関数
-def get_user_input():
-    ball1['x'] = int(document.getElementById('ball1_x').value)
-    ball1['y'] = int(document.getElementById('ball1_y').value)
-    ball1['velocity'] = int(document.getElementById('ball1_v').value)
-    ball2['x'] = int(document.getElementById('ball2_x').value)
-    ball2['y'] = int(document.getElementById('ball2_y').value)
-    ball2['velocity'] = int(document.getElementById('ball2_v').value)
+      async function plotTrajectory() {
+        if (!pyodideLoaded) {
+          await loadPyodideAndPackages();  // Only load if not already loaded
+        }
+        
+        const angle = document.getElementById('angle').value;
 
-# アニメーションの描画を行う関数
-def draw_animation():
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.beginPath()
-    ctx.arc(ball1['x'], ball1['y'], ball1['radius'], 0, 2 * Math.PI)
-    ctx.fillStyle = ball1['color']
-    ctx.fill()
-    ctx.closePath()
+        let result = await pyodideRuntime.runPythonAsync(
+          'import numpy as np\n' +
+          'import matplotlib.pyplot as plt\n' +
+          'from math import sin, cos, radians\n' +
+          'import io, base64\n' +
+          'velocity = 20  # Fixed initial velocity\n' +
+          'theta = radians(float(' + angle + '))\n' +
+          'g = 9.81  # Gravity acceleration\n' +
+          't_flight = 2 * velocity * sin(theta) / g\n' +
+          't = np.linspace(0, t_flight, num=300)\n' +
+          'x = velocity * cos(theta) * t\n' +
+          'y = velocity * sin(theta) * t - 0.5 * g * t**2\n' +
+          'fig, ax = plt.subplots()\n' +
+          'ax.plot(x, y)\n' +
+          'ax.set_title("Projectile Motion - Angle: " + str(' + angle + ') + " degrees")\n' +
+          'ax.set_xlabel("Distance (m)")\n' +
+          'ax.set_ylabel("Height (m)")\n' +
+          'ax.set_xlim(0, 50)\n' +
+          'ax.set_ylim(0, 25)\n' +
+          'ax.grid(True)\n' +
+          'buf = io.BytesIO()\n' +
+          'plt.savefig(buf, format="png")\n' +
+          'buf.seek(0)\n' +
+          'img_base64 = base64.b64encode(buf.getvalue()).decode("ascii")\n' +
+          'buf.close()\n' +
+          'plt.close(fig)\n' +
+          '"<img src=\\"data:image/png;base64," + img_base64 + "\\" style=\\"max-width:100%; height:auto;\\">"'
+        );
 
-    ctx.beginPath()
-    ctx.arc(ball2['x'], ball2['y'], ball2['radius'], 0, 2 * Math.PI)
-    ctx.fillStyle = ball2['color']
-    ctx.fill()
-    ctx.closePath()
-
-    ball1['x'] += ball1['velocity']
-    ball2['x'] += ball2['velocity']
-
-    # 球体が衝突したらアニメーションを停止する
-    if ball1['x'] + ball1['radius'] >= ball2['x'] - ball2['radius']:
-        return
-
-    setTimeout(draw_animation, 1000 / 60)  # 60 FPS
-
-# アニメーションを開始する関数
-def startAnimation():
-    get_user_input()
-    draw_animation()
-
-# ページが読み込まれた時にアニメーションを開始する
-window.onload = startAnimation
+        document.getElementById('output').innerHTML = result;
+      }
+    </script>
+</body>
+</html>
