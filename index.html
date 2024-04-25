@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Pyodide on GitHub Pages</title>
+    <title>Pyodide Test</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
 </head>
 <body>
@@ -13,6 +13,9 @@
         let pyodide = await loadPyodide({
           indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
         });
+        // numpy パッケージをロード
+        await pyodide.loadPackage('numpy');
+        // numpy を使用した計算
         let result = await pyodide.runPythonAsync(`
           import numpy as np
           np.sum(np.array([1, 2, 3, 4, 5]))
