@@ -2,27 +2,36 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Pyodide Test</title>
+    <title>Pyodide Interactive Form</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
 </head>
 <body>
-    <h1>Pyodideを使ったPython実行のデモ</h1>
+    <h1>Pyodideを使ったインタラクティブな計算デモ</h1>
+    <p>加算したい数値を入力してください（カンマ区切り）:</p>
+    <input type="text" id="numbers" placeholder="例：1, 2, 3, 4, 5">
+    <button onclick="calculateSum()">計算</button>
     <p id="output">結果がここに表示されます。</p>
+
     <script type="text/javascript">
-      async function main() {
+      async function calculateSum() {
         let pyodide = await loadPyodide({
           indexURL : "https://cdn.jsdelivr.net/pyodide/v0.18.1/full/"
         });
-        // numpy パッケージをロード
         await pyodide.loadPackage('numpy');
-        // numpy を使用した計算
+
+        // ユーザーが入力したテキストを取得
+        const input = document.getElementById('numbers').value;
+        // 入力を配列に変換
+        const numbers = input.split(',').map(Number);
+
+        // numpy を使用して配列の合計を計算
         let result = await pyodide.runPythonAsync(`
           import numpy as np
-          np.sum(np.array([1, 2, 3, 4, 5]))
+          np.sum(${JSON.stringify(numbers)})
         `);
+
         document.getElementById('output').innerText = "計算結果: " + result.toString();
       }
-      main();
     </script>
 </body>
 </html>
