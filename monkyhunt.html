@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Physics Simulation</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.18.1/full/pyodide.js"></script>
+</head>
+<body>
+    <h1>Physics Simulation</h1>
+    <div>
+        <label for="speedInput">Speed of A:</label>
+        <input type="range" id="speedInput" min="0" max="100" value="50">
+        <span id="speedDisplay">50</span>
+    </div>
+    <div>
+        <label for="xInput">Initial X Position of B:</label>
+        <input type="range" id="xInput" min="0" max="200" value="80">
+        <span id="xDisplay">80</span>
+    </div>
+    <div>
+        <label for="yInput">Initial Y Position of B:</label>
+        <input type="range" id="yInput" min="0" max="150" value="100">
+        <span id="yDisplay">100</span>
+    </div>
+    <button id="startBtn">Start Simulation</button>
+    <div id="output"></div>
+
+    <script type="text/javascript">
+        async function main() {
+            let pyodide = await loadPyodide();
+            document.getElementById("startBtn").addEventListener("click", async () => {
+                let speed = document.getElementById("speedInput").value;
+                let xPos = document.getElementById("xInput").value;
+                let yPos = document.getElementById("yInput").value;
+                let result = await pyodide.runPythonAsync(`
+                    import matplotlib.pyplot as plt
+                    import numpy as np
+
+                    g = 9.81  # gravity
+                    def projectile_motion(t, v0, theta):
+                        x = v0 * t * np.cos(theta)
+                        y = v0 * t * np.sin(theta) - 0.5 * g * t**2
+                        return x, max(y, 0)
+
+                    v0 = ${speed}
+                    theta = np.arctan2(${yPos}, ${xPos})
+                    t = np.linspace(0, 2, num=100)
+                    trajectory = [projectile_motion(ti, v0, theta) for ti in t]
+                    x, y = zip(*trajectory)
+                    plt.figure()
+                    plt.plot(x, y)
+                    plt.xlim(0, 200)
+                    plt.ylim(0, 150)
+                    plt.xlabel('Distance')
+                    plt.ylabel('Height')
+                    plt.title('Projectile Motion')
+                    plt.show()
+                `);
+                document.getElementById("output").innerHTML = '<img src="' + result + '" />';
+            });
+        }
+        main();
+    </script>
+</body>
+</html>
